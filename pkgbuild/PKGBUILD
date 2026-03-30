@@ -1,42 +1,46 @@
-# Maintainer: Barnabé di Kartola <barnabedikartola@gmail.com>
+# Maintainer: Bruno Gonçalves <bruno@biglinux.com.br>
+# Contributor: Barnabé di Kartola <barnabedikartola@gmail.com>
 
-pkgname=biglinux-package-template
-pkgdesc="Package template for biglinux"
-# depends=('')
-# makedepends=('')
-# conflicts=('')
-pkgver=$(date +%y.%m.%d)
-pkgrel=$(date +%H%M)
-arch=('any')
+pkgname=dz6
+pkgdesc="Fast Vim-inspired TUI hex editor"
+pkgver=0.6.0.r1.gbd7707b # Será atualizado automaticamente pela função pkgver()
+pkgrel=1
+arch=('x86_64' 'aarch64')
 license=('GPL3')
-url="https://github.com/biglinux/$pkgname"
+url="https://github.com/mentebinaria/dz6"
 provides=("$pkgname")
+depends=('glibc' 'gcc-libs')
+makedepends=('cargo' 'git')
+
+# Aponta para o repositório original onde está o código em Rust
 source=("git+${url}.git")
 md5sums=('SKIP')
-if [ -e "${pkgname}.install" ];then
+
+if [ -e "${pkgname}.install" ]; then
     install=${pkgname}.install
-elif [ -e "pkgbuild.install" ];then
+elif [ -e "pkgbuild.install" ]; then
     install=pkgbuild.install
 fi
 
+pkgver() {
+    cd "$pkgname"
+    # Gera a versão baseada nas tags do git, removendo o 'v' inicial e formatando a revisão
+    git describe --long --tags | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+    cd "$pkgname"
+    export CARGO_TARGET_DIR=target
+    cargo build --release --locked
+}
+
 package() {
-    # Verify default folder
-    if [ -d "${srcdir}/${pkgname}/${pkgname}" ]; then
-        InternalDir="${srcdir}/${pkgname}/${pkgname}"
-    else
-        InternalDir="${srcdir}/${pkgname}"
-    fi
+    cd "$pkgname"
+    
+    # Instala o executável compilado no diretório bin do sistema
+    install -Dm755 "target/release/dz6" "${pkgdir}/usr/bin/dz6"
 
-    # Copy files
-    if [ -d "${InternalDir}/usr" ]; then
-        cp -r "${InternalDir}/usr" "${pkgdir}/"
-    fi
-
-    if [ -d "${InternalDir}/etc" ]; then
-        cp -r "${InternalDir}/etc" "${pkgdir}/"
-    fi
-
-    if [ -d "${InternalDir}/opt" ]; then
-        cp -r "${InternalDir}/opt" "${pkgdir}/"
-    fi
+    # Instala arquivos úteis adicionais (Licença e README)
+    install -Dm644 "LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    install -Dm644 "README.md" "${pkgdir}/usr/share/doc/${pkgname}/README.md"
 }
