@@ -1,46 +1,31 @@
 # Maintainer: Bruno Gonçalves <bruno@biglinux.com.br>
-# Contributor: Barnabé di Kartola <barnabedikartola@gmail.com>
 
 pkgname=dz6
 pkgdesc="Fast Vim-inspired TUI hex editor"
-pkgver=0.6.0.r1.gbd7707b # Será atualizado automaticamente pela função pkgver()
+pkgver=0.6.0
 pkgrel=1
 arch=('x86_64' 'aarch64')
-license=('GPL3')
+license=('GPL-3.0-or-later')
 url="https://github.com/mentebinaria/dz6"
 provides=("$pkgname")
 depends=('glibc' 'gcc-libs')
-makedepends=('cargo' 'git')
+makedepends=('cargo')
 
-# Aponta para o repositório original onde está o código em Rust
-source=("git+${url}.git")
-md5sums=('SKIP')
-
-if [ -e "${pkgname}.install" ]; then
-    install=${pkgname}.install
-elif [ -e "pkgbuild.install" ]; then
-    install=pkgbuild.install
-fi
-
-pkgver() {
-    cd "$pkgname"
-    # Gera a versão baseada nas tags do git, removendo o 'v' inicial e formatando a revisão
-    git describe --long --tags | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
-}
+source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('SKIP')
 
 build() {
-    cd "$pkgname"
+    cd "${pkgname}-${pkgver}"
+    
     export CARGO_TARGET_DIR=target
     cargo build --release --locked
 }
 
 package() {
-    cd "$pkgname"
+    cd "${pkgname}-${pkgver}"
     
-    # Instala o executável compilado no diretório bin do sistema
     install -Dm755 "target/release/dz6" "${pkgdir}/usr/bin/dz6"
 
-    # Instala arquivos úteis adicionais (Licença e README)
     install -Dm644 "LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
     install -Dm644 "README.md" "${pkgdir}/usr/share/doc/${pkgname}/README.md"
 }
